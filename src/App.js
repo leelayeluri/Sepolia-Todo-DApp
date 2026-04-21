@@ -1,101 +1,109 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import './App.css';
 
-// 1. YOUR CONTRACT DETAILS
-const contractAddress = "0xddaE8088562b315E92077005Fbf1a86B68BFBe92"; 
+// UEL COURSEWORK DATA - SEPOLIA DEPLOYMENT
+const contractAddress = "0x688e21d981D1a0B85288B0C93e5CCc010DA2482e";
 const abi = [
-  "function createTask(string _content) public",
-  "function getTasks() public view returns (tuple(uint256 id, string content, bool completed)[])"
+  { "inputs": [{ "internalType": "string", "name": "_content", "type": "string" }], "name": "createTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256", "name": "_id", "type": "uint256" }], "name": "toggleCompleted", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "tasks", "outputs": [{ "internalType": "uint256", "name": "id", "type": "uint256" }, { "internalType": "string", "name": "content", "type": "string" }, { "internalType": "bool", "name": "completed", "type": "bool" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [], "name": "taskCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }
 ];
 
 function App() {
-  const [taskContent, setTaskContent] = useState("");
-  const [taskList, setTaskList] = useState([]);
-  const [status, setStatus] = useState("Initializing...");
+  const [isEntered, setIsEntered] = useState(false);
+  const [newItem, setNewItem] = useState("");
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch tasks on load
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  // READ DATA: Uses a Public RPC to bypass browser security blocks (CSP)
-  async function fetchTasks() {
+  const fetchTasks = async () => {
+    if (typeof window.ethereum === 'undefined') return;
     try {
-      const publicProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth_sepolia");
-      const contract = new ethers.Contract(contractAddress, abi, publicProvider);
-      
-      const data = await contract.getTasks();
-      const items = data.map(t => ({
-        id: t[0].toString(),
-        content: t[1],
-        completed: t[2]
-      }));
-      
-      setTaskList(items);
-      setStatus("Tasks loaded successfully");
-    } catch (err) {
-      console.error("Fetch failed:", err);
-      setStatus("Error loading tasks. Check Console.");
-    }
-  }
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const contract = new ethers.Contract(contractAddress, abi, provider);
+      const count = await contract.taskCount();
+      const tempTasks = [];
+      for (let i = 1; i <= Number(count); i++) {
+        const task = await contract.tasks(i);
+        tempTasks.push({ id: task[0], content: task[1], completed: task[2] });
+      }
+      setTasks(tempTasks);
+    } catch (err) { console.error("Blockchain Sync Error:", err); }
+  };
 
-  // WRITE DATA: Still uses MetaMask to sign the transaction
-  async function addTask() {
-    if (!taskContent || !window.ethereum) {
-        alert("Please enter a task and ensure MetaMask is connected.");
-        return;
-    }
+  useEffect(() => { if (isEntered) fetchTasks(); }, [isEntered]);
+
+  const createTask = async () => {
+    if (!newItem) return;
+    setLoading(true);
     try {
-      setStatus("Confirming in MetaMask...");
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, abi, signer);
-      
-      const tx = await contract.createTask(taskContent);
-      setStatus("Transaction pending...");
-      await tx.wait();
-      
-      setTaskContent("");
-      setStatus("Task added! Refreshing list...");
+      const tx = await contract.createTask(newItem);
+      await tx.wait(); // WAITING FOR SEPOLIA MINING
+      setNewItem("");
       fetchTasks();
-    } catch (err) {
-      console.error("Transaction failed:", err);
-      setStatus("Transaction failed. Ensure you are on Sepolia.");
-    }
+    } catch (e) { console.error("Transaction Rejected:", e); }
+    finally { setLoading(false); }
+  };
+
+  const toggleTask = async (id) => {
+    setLoading(true);
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      const tx = await contract.toggleCompleted(id);
+      await tx.wait();
+      fetchTasks();
+    } catch (e) { console.error("Toggle Failed:", e); }
+    finally { setLoading(false); }
+  };
+
+  if (!isEntered) {
+    return (
+      <div className="main-viewport">
+        <div className="glass-container login-focus">
+          <div className="scan-line"></div>
+          <h1 className="neon-cyan">ENCRYPTED ACCESS</h1>
+          <p className="node-id">CN6035 NODE: 0x688e...482e</p>
+          <button className="initialize-btn" onClick={() => setIsEntered(true)}>AUTHORIZE WALLET</button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: "50px", textAlign: "center", fontFamily: "sans-serif", backgroundColor: "#f4f4f9", minHeight: "100vh" }}>
-      <h1>Blockchain Todo List</h1>
-      <p><strong>Status:</strong> {status}</p>
-      
-      <div style={{ marginBottom: "30px" }}>
-        <input 
-          value={taskContent} 
-          placeholder="New Task..."
-          onChange={e => setTaskContent(e.target.value)} 
-          style={{ padding: "10px", width: "250px", borderRadius: "5px", border: "1px solid #ccc" }} 
-        />
-        <button onClick={addTask} style={{ padding: "10px 20px", marginLeft: "10px", cursor: "pointer", borderRadius: "5px", backgroundColor: "#007bff", color: "#fff", border: "none" }}>
-          Add Task
-        </button>
-      </div>
+    <div className="main-viewport">
+      {loading && (
+        <div className="process-overlay">
+          <div className="gear-3d">⚙️</div>
+          <p className="loading-txt">MINING BLOCK ON SEPOLIA...</p>
+        </div>
+      )}
 
-      <button onClick={fetchTasks} style={{ marginBottom: "20px", padding: "5px 15px", cursor: "pointer" }}>
-        Refresh UI
-      </button>
+      <div className={`glass-container task-focus ${loading ? 'blurred' : ''}`}>
+        <div className="panel-header">
+          <h2 className="neon-magenta">SYSTEM_CORE_v2</h2>
+          <span className="live-tag">TESTNET LIVE</span>
+        </div>
 
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        {taskList.length > 0 ? (
-          taskList.map((t, i) => (
-            <div key={i} style={{ backgroundColor: "#fff", border: "1px solid #ddd", margin: "5px", padding: "15px", width: "350px", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)", display: "flex", justifyContent: "space-between" }}>
-              <span>{t.content}</span>
-              <span>{t.completed ? "✅" : "⏳"}</span>
+        <div className="input-row">
+          <input className="dark-input" type="text" placeholder="UPLOAD DATA..." value={newItem} onChange={(e) => setNewItem(e.target.value)} />
+          <button className="add-task-btn" onClick={createTask}>+</button>
+        </div>
+
+        <div className="task-scroll">
+          {tasks.map((task) => (
+            <div key={Number(task.id)} className={`task-entry ${task.completed ? 'task-done' : ''}`} onClick={() => toggleTask(task.id)}>
+              <span className="content">{task.content}</span>
+              <div className="status-orb"></div>
             </div>
-          ))
-        ) : (
-          <p>No tasks found on Sepolia. Try adding one!</p>
-        )}
+          ))}
+        </div>
+        <button className="disconnect-btn" onClick={() => setIsEntered(false)}>TERMINATE SESSION</button>
       </div>
     </div>
   );

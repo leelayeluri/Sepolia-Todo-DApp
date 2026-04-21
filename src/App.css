@@ -1,38 +1,31 @@
-.App {
-  text-align: center;
-}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;700&display=swap');
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
+body { margin: 0; background: #020204; color: #fff; font-family: 'Space Grotesk', sans-serif; height: 100vh; overflow: hidden; }
+.main-viewport { display: flex; justify-content: center; align-items: center; height: 100vh; background: radial-gradient(circle at center, #0d1a26 0%, #020204 100%); }
+.glass-container { background: rgba(15, 15, 20, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(0, 242, 255, 0.1); padding: 40px; border-radius: 4px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9); position: relative; }
+.login-focus { width: 380px; border-bottom: 3px solid #ff0055; text-align: center; }
+.task-focus { width: 480px; border-bottom: 3px solid #00f2ff; min-height: 520px; }
+.neon-cyan { color: #00f2ff; text-shadow: 0 0 12px #00f2ff; letter-spacing: 4px; margin: 0; }
+.neon-magenta { color: #ff0055; text-shadow: 0 0 12px #ff0055; letter-spacing: 2px; margin: 0; }
+.node-id { color: #444; font-size: 10px; margin-top: 10px; }
+.initialize-btn { background: transparent; border: 1px solid #00f2ff; color: #00f2ff; padding: 15px 35px; margin-top: 30px; cursor: pointer; font-weight: 700; transition: all 0.3s; }
+.initialize-btn:hover { background: #00f2ff; color: #000; box-shadow: 0 0 30px #00f2ff; }
+.process-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 4px; }
+.gear-3d { font-size: 80px; filter: drop-shadow(0 0 15px #00f2ff); animation: rotateGear 2.5s infinite linear; }
+@keyframes rotateGear { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.loading-txt { color: #00f2ff; font-weight: bold; letter-spacing: 4px; margin-top: 20px; font-size: 12px; }
+.blurred { filter: blur(5px); pointer-events: none; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.live-tag { background: #39ff14; color: #000; padding: 2px 8px; font-size: 10px; font-weight: bold; }
+.input-row { display: flex; gap: 8px; margin-bottom: 25px; }
+.dark-input { flex: 1; background: #000; border: 1px solid #222; color: #00f2ff; padding: 14px; outline: none; }
+.add-task-btn { background: #ff0055; color: white; border: none; width: 50px; font-size: 24px; cursor: pointer; }
+.task-scroll { max-height: 320px; overflow-y: auto; }
+.task-entry { display: flex; justify-content: space-between; align-items: center; padding: 18px; background: rgba(255,255,255,0.02); border: 1px solid #111; margin-bottom: 10px; cursor: pointer; }
+.task-entry:hover { border-color: #ff0055; background: rgba(255, 0, 85, 0.05); }
+.task-done { opacity: 0.3; border-left: 5px solid #39ff14; text-decoration: line-through; }
+.status-orb { width: 12px; height: 12px; border-radius: 50%; background: #222; border: 1px solid #333; }
+.task-done .status-orb { background: #39ff14; box-shadow: 0 0 10px #39ff14; }
+.disconnect-btn { background: none; border: none; color: #333; font-size: 10px; margin-top: 25px; cursor: pointer; width: 100%; letter-spacing: 2px; }
+.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: rgba(0, 242, 255, 0.3); animation: scanMove 4s infinite linear; }
+@keyframes scanMove { 0% { top: 0; } 100% { top: 100%; } }
